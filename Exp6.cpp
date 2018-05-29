@@ -1,153 +1,119 @@
-#include<iostream>
-#include<cmath>
-#include<stdio.h>
-
-#define N 100
-#define a 0.5
-#define Epsilon 1
-
+#include <iostream>
+#include <cmath>
+#include <stdio.h>
 using namespace std;
-double ** A;
-double *B;
+
+#define Epsilon 1
+#define a 0.5
+#define N 100
+
 double h = 1.0 / N;
-double *Y;
+double **A;  //ç³»æ•°çŸ©é˜µ
+double *B;  //ç»“æžœçŸ©é˜µ
+double *Y;  //ç²¾ç¡®è§£
 
-void Jacobi()
-{
-	double *X_now = new double[N-1];
-	double *X_next = new double[N-1];
-	for ( int i = 0; i < N-1; i++ )
-		X_now[i] = 0;
-	int num = 0;
-	while (num < 5000)
-	{
-		for ( int i = 0; i < N-1; i++ )
-		{
-			double sum = 0.0;
-			for ( int j = 0; j < N-1; j++ )
-				if ( j != i )
-					sum += A[i][j] * X_now[j]; 
-			X_next[i] = (B[i] - sum)/A[i][i];
-		}
-		for ( int i = 0; i < N-1; i++ )
-			X_now[i] = X_next[i];
-		
-		num++;		
-	}
-	double sum = 0.0;
-	for ( int i = 0; i < N-1; i++)
-		sum += (X_now[i] - Y[i])*(X_now[i] - Y[i]);	
-	sum = sqrt(sum);
-	cout << "Jacobiµü´ú£º" << endl;
-	cout <<	"Îó²î£º" << sum << endl;
-	for ( int i = 0; i < N-1; i++)
-		printf("%.4f ",X_now[i]);
-	cout << endl;
+void Deviation(double *X, double *Y, char method[]){
+    double dev = 0.0;
+    cout << method << " result: " << endl;
+    for(int i = 0; i < N - 1; i++){
+        printf("%.4f  *",X[i]);  //è¾“å‡ºè§£
+        dev += (X[i] - Y[i]) * (X[i] - Y[i]);
+    }
+    dev = sqrt(dev);
+    cout << endl;
+    cout << method << " deviation: " << dev << endl;
 }
 
-void Gauss_Seidel()
-{
-	double *X_now = new double[N-1];
-	double *X_next = new double[N-1];
-	for ( int i = 0; i < N-1; i++ )
-		X_now[i] = 0;
-	int num = 0;
-	while (num < 5000)
-	{
-		for ( int i = 0; i < N-1; i++ )
-		{
-			double sum = 0.0;
-			for ( int j = 0; j < i; j++ )
-				sum += A[i][j] * X_next[j];
-			for ( int j = i; j < N-1; j++ )
-				sum += A[i][j] * X_now[j]; 
-			X_next[i] = X_now[i] + ((B[i] - sum)/A[i][i]);
-		}
-		for ( int i = 0; i < N-1; i++ )
-			X_now[i] = X_next[i];
-		num++;		
-	}
-	double sum = 0.0;
-	for ( int i = 0; i < N-1; i++)
-		sum += (X_now[i] - Y[i])*(X_now[i] - Y[i]);	
-	sum = sqrt(sum);
-	cout << "Gauss_Seidelµü´ú£º" << endl;
-	cout <<	"Îó²î£º" << sum << endl;
-	for ( int i = 0; i < N-1; i++)
-		printf("%.4f ",X_now[i]);
-	cout << endl;
+void Jacobi(double *Y){
+    double *X_k = new double[N - 1];
+    double *X_k_1 = new double[N - 1];
+    for(int i = 0; i < N - 1; i++)  //åˆå§‹åŒ–è¿­ä»£çš„X
+        X_k[i] = 0.0;
+    int iter_num = 0;
+    while(iter_num <= 10000){
+        for(int i = 0; i < N - 1; i++){
+            double tmp = 0.0;
+            for(int j = 0; j < N - 1; j++)
+                if(i != j)
+                    tmp -= A[i][j] * X_k[j];
+            X_k_1[i] = (tmp + B[i]) / A[i][i];
+        }
+        for(int i = 0; i < N -1; i++)
+            X_k[i] = X_k_1[i];
+        iter_num++;
+    }
+    char method[] = "Jacobi";
+    Deviation(X_k, Y, method);
 }
 
-void SOR()
-{
-		double *X_now = new double[N-1];
-	double *X_next = new double[N-1];
-	for ( int i = 0; i < N-1; i++ )
-		X_now[i] = 0;
-	int num = 0;
-	while (num < 5000)
-	{
-		for ( int i = 0; i < N-1; i++ )
-		{
-			double sum = 0.0;
-			for ( int j = 0; j < i; j++ )
-				sum += A[i][j] * X_next[j];
-			for ( int j = i; j < N-1; j++ )
-				sum += A[i][j] * X_now[j]; 
-			X_next[i] = X_now[i] + 1.5*((B[i] - sum)/A[i][i]);
-		}
-		for ( int i = 0; i < N-1; i++ )
-			X_now[i] = X_next[i];
-		num++;		
-	}
-	double sum = 0.0;
-	for ( int i = 0; i < N-1; i++)
-		sum += (X_now[i] - Y[i])*(X_now[i] - Y[i]);	
-	sum = sqrt(sum);
-	cout << "SORµü´ú£º" << endl;	
-	cout << "Îó²î£º" << sum << endl;
-	for ( int i = 0; i < N-1; i++)
-		printf("%.4f ",X_now[i]);
-	cout << endl;
+void Gauss_Seidel(double *Y){
+    double *X_k = new double[N - 1];
+    double *X_k_1 = new double[N - 1];
+    for(int i = 0; i < N - 1; i++)  //åˆå§‹åŒ–è¿­ä»£çš„X
+        X_k[i] = 0.0;
+    int iter_num = 0;
+    while(iter_num <= 10000){
+        for(int i = 0; i < N - 1; i++){
+            double tmp = 0.0;
+            for(int j = 0; j < i; j++)
+                tmp -= A[i][j] * X_k_1[j];
+            for(int j = i + 1; j < N - 1; j++)
+                tmp -= A[i][j] * X_k[j];
+            X_k_1[i] = (B[i] + tmp) / A[i][i];  
+        }
+        for(int i = 0; i < N -1; i++)
+            X_k[i] = X_k_1[i];
+        iter_num++;
+    }
+    char method[] = "Gauss_Seidel";
+    Deviation(X_k, Y, method);
 }
 
-int main()
-{
-	Y = new double[N-1];
-	for ( int i = 0; i < N-1; i++ )
-		Y[i] = (1-a)/(1-exp(-1/Epsilon)) *(1-exp(-((i+1) * h)/Epsilon)) + a*((i+1) * h);
-	cout << "¾«È·½â£º"<< endl; 
-	for ( int i = 0; i < N-1; i++)
-		printf("%.4f ",Y[i]);
-	cout << endl;	
-	A = new double* [N-1];
-	for ( int i = 0; i < N-1; i++ )
-		A[i] = new double[N-1];
-	for ( int i = 0; i < N-1; i++)
-		for (int j = 0; j < N-1; j++ )
-			A[i][j] = 0.0;
-			
-	for (int i = 0; i < N-1; i++ )
-		A[i][i] = -(2.0*Epsilon+h);
-	for (int i = 1; i < N-1; i++ )
-		A[i][i-1] = Epsilon;
-	for (int i = 0; i < N-2; i++ )
-		A[i][i+1] = Epsilon+h;
-//	for ( int i = 0; i < N-1; i++)
-//		{
-//			for (int j = 0; j < N-1; j++ )
-//				cout << A[i][j] << ' ';
-//			cout << endl;
-//		}
-	B = new double[N-1];
-	for ( int i = 0; i < N-1; i++ )
-		B[i] = a * h * h;
-	B[N-2] -= (Epsilon+h); 
-//	for ( int i = 0; i < N-1; i++ )
-//		cout << B[i] << ' ';
-	Jacobi();
-	Gauss_Seidel();
-	SOR();
-		
-	return 0;
+void  SOR(double *Y){
+    double *X_k = new double[N - 1];
+    double *X_k_1 = new double[N - 1];
+    for(int i = 0; i < N - 1; i++)  //åˆå§‹åŒ–è¿­ä»£çš„X
+        X_k[i] = 0.0;
+    int iter_num = 0;
+    while(iter_num <= 10000){
+        for(int i = 0; i < N - 1; i++){
+            double tmp = 0.0;
+            for(int j = 0; j < i; j++)
+                tmp -= A[i][j] * X_k_1[j];
+            for(int j = i; j < N - 1; j++)
+                tmp -= A[i][j] * X_k[j];
+            X_k_1[i] = X_k[i] + (B[i] + tmp) / A[i][i];  
+        }
+        for(int i = 0; i < N -1; i++)
+            X_k[i] = X_k_1[i];
+        iter_num++;
+    }
+    char method[] = "SOR";
+    Deviation(X_k, Y, method);
+}
+
+int main(){
+    A = new double*[N - 1];
+    double const_num[3] = {Epsilon + h, -h - 2.0 * Epsilon, Epsilon};
+    for(int i = 0; i < N - 1; i++){  //åˆå§‹åŒ–AçŸ©é˜µ
+        A[i] = new double[N - 1];
+        for(int j = 0; j < N -1; j++)
+            if((i - j) >= -1 && (i - j) <= 1)
+                A[i][j] = const_num[i-j+1];
+            else 
+                A[i][j] = 0.0;
+    }
+
+    B = new double[N - 1];
+    for(int i = 0; i < N - 1; i++)
+        B[i] = a * h * h;
+    B[N - 2] -= (h + Epsilon);  
+
+    Y = new double[N - 1];
+    for(int i = 0; i < N - 1; i++)
+        Y[i] = (1 - a) / (1 - exp(-1 / Epsilon)) * (1 - exp(-((i + 1) * h) / Epsilon)) + a * (i + 1) * h;
+    Jacobi(Y);
+    Gauss_Seidel(Y);
+    SOR(Y);
+    return 0;
 }
